@@ -1,6 +1,5 @@
 package io.fairyproject.app;
 
-import io.fairyproject.ExtendedClassLoader;
 import io.fairyproject.FairyPlatform;
 import io.fairyproject.library.Library;
 import io.fairyproject.module.ModuleService;
@@ -23,7 +22,6 @@ import java.util.jar.JarFile;
 public class FairyAppPlatform extends FairyPlatform {
 
     private final List<Class<?>> appClasses = new ArrayList<>();
-    private final ExtendedClassLoader classLoader;
     private final Thread mainThread;
     private boolean running;
 
@@ -35,7 +33,6 @@ public class FairyAppPlatform extends FairyPlatform {
 
     public FairyAppPlatform() {
         FairyPlatform.INSTANCE = this;
-        this.classLoader = new ExtendedClassLoader(this.getClass().getClassLoader());
         this.mainThread = Thread.currentThread();
         this.running = true;
     }
@@ -82,11 +79,6 @@ public class FairyAppPlatform extends FairyPlatform {
 
     public boolean isAppClass(Class<?> type) {
         return this.appClasses.contains(type);
-    }
-
-    @Override
-    public ExtendedClassLoader getClassloader() {
-        return this.classLoader;
     }
 
     @Override

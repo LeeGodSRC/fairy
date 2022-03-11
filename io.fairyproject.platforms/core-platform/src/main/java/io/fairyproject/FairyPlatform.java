@@ -25,13 +25,13 @@
 package io.fairyproject;
 
 import io.fairyproject.aspect.AsyncAspect;
-import io.fairyproject.cache.CacheableAspect;
 import io.fairyproject.container.ContainerContext;
 import io.fairyproject.container.object.SimpleContainerObject;
 import io.fairyproject.library.Library;
 import io.fairyproject.library.LibraryHandler;
 import io.fairyproject.plugin.PluginManager;
 import io.fairyproject.task.ITaskScheduler;
+import io.fairyproject.util.URLClassLoaderAccess;
 import io.fairyproject.util.terminable.composite.CompositeClosingException;
 import io.fairyproject.util.terminable.composite.CompositeTerminable;
 import lombok.Getter;
@@ -41,8 +41,11 @@ import org.apache.logging.log4j.Logger;
 import javax.annotation.Nullable;
 import java.io.*;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.net.URLConnection;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -54,6 +57,8 @@ public abstract class FairyPlatform {
     public static FairyPlatform INSTANCE;
     private final AtomicBoolean loadedDependencies = new AtomicBoolean();
 
+    private URLClassLoaderAccess classLoaderAccess;
+
     private ITaskScheduler taskScheduler;
     private CompositeTerminable compositeTerminable;
 
@@ -61,6 +66,7 @@ public abstract class FairyPlatform {
     private ContainerContext containerContext;
 
     public void load() {
+        this.classLoaderAccess = URLClassLoaderAccess.create((URLClassLoader) this.getClass().getClassLoader());
         this.loadDependencies();
 
         this.taskScheduler = this.createTaskScheduler();
@@ -116,13 +122,6 @@ public abstract class FairyPlatform {
     public AutoCloseable bind(ExecutorService executorService) {
         return this.bind(executorService::shutdown);
     }
-
-    /**
-     * get Plugin Class Loader
-     *
-     * @return Plugin Class Loader
-     */
-    public abstract ExtendedClassLoader getClassloader();
 
     /**
      * get Fairy Folder

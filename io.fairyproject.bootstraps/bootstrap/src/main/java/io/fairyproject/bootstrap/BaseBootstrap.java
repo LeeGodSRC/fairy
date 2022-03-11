@@ -1,12 +1,13 @@
 package io.fairyproject.bootstrap;
 
 import io.fairyproject.bootstrap.type.PlatformType;
-import io.fairyproject.bootstrap.util.ClassLoaderUtil;
 import io.fairyproject.bootstrap.util.DownloadUtil;
+import io.fairyproject.bootstrap.util.URLClassLoaderAccess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -55,7 +56,8 @@ public abstract class BaseBootstrap {
     }
 
     public boolean loadJar(Path jarPath) throws Exception {
-        CLASS_LOADER = ClassLoaderUtil.addURLToClassLoader(jarPath);
+        CLASS_LOADER = this.getClass().getClassLoader();
+        URLClassLoaderAccess.create((URLClassLoader) CLASS_LOADER).addURL(jarPath.toUri().toURL());
         return true;
     }
 

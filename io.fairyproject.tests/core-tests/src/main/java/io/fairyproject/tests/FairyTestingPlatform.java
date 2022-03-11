@@ -1,6 +1,5 @@
 package io.fairyproject.tests;
 
-import io.fairyproject.ExtendedClassLoader;
 import io.fairyproject.FairyPlatform;
 import io.fairyproject.library.Library;
 import io.fairyproject.module.ModuleService;
@@ -42,11 +41,6 @@ public class FairyTestingPlatform extends FairyPlatform {
     @Override
     public void loadDependencies() {
         // We do not need dependencies here
-    }
-
-    @Override
-    public ExtendedClassLoader getClassloader() {
-        return new ExtendedClassLoader(this.getClass().getClassLoader());
     }
 
     @Override

@@ -96,7 +96,7 @@ public class ModulePluginListenerAdapter implements PluginListenerAdapter {
                         this.tryRelocateJar(modules, moduleData, jsonObject, pluginDescription, action, relocationEntries);
 
                         ContainerContext.log("[>>Remapper>>] Successfully loaded %s (from: %s)", moduleData.getName(), moduleData.getShadedPath().toString());
-                        Fairy.getPlatform().getClassloader().addJarToClasspath(moduleData.getShadedPath());
+                        Fairy.getPlatform().getClassLoaderAccess().addPath(moduleData.getShadedPath());
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

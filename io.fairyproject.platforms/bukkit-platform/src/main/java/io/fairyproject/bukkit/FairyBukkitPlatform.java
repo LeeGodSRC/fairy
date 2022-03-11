@@ -25,7 +25,6 @@
 package io.fairyproject.bukkit;
 
 import com.github.retrooper.packetevents.PacketEvents;
-import io.fairyproject.ExtendedClassLoader;
 import io.fairyproject.FairyPlatform;
 import io.fairyproject.bukkit.events.PostServicesInitialEvent;
 import io.fairyproject.bukkit.impl.BukkitPluginHandler;
@@ -64,7 +63,6 @@ public class FairyBukkitPlatform extends FairyPlatform implements TerminableCons
     public static Plugin PLUGIN;
     public static BukkitAudiences AUDIENCES;
 
-    private final ExtendedClassLoader classLoader;
     private final File dataFolder;
     private final CompositeTerminable compositeTerminable;
 
@@ -78,7 +76,6 @@ public class FairyBukkitPlatform extends FairyPlatform implements TerminableCons
         FairyPlatform.INSTANCE = this;
         this.dataFolder = dataFolder;
         this.compositeTerminable = CompositeTerminable.create();
-        this.classLoader = new ExtendedClassLoader(this.getClass().getClassLoader());
     }
 
     @Override
@@ -125,11 +122,6 @@ public class FairyBukkitPlatform extends FairyPlatform implements TerminableCons
     @Override
     public void saveResource(String name, boolean replace) {
         PLUGIN.saveResource(name, replace);
-    }
-
-    @Override
-    public ExtendedClassLoader getClassloader() {
-        return this.classLoader;
     }
 
     @Override
