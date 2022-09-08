@@ -26,11 +26,11 @@ package io.fairyproject;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.model.Filters;
+import io.fairyproject.container.Autowired;
+import io.fairyproject.jackson.JacksonService;
 import io.fairyproject.mongo.AbstractMongoRepositoryProvider;
 import lombok.Getter;
 import org.bson.BsonDocument;
-import io.fairyproject.container.Autowired;
-import io.fairyproject.jackson.JacksonService;
 import org.mongojack.JacksonMongoCollection;
 import org.mongojack.internal.MongoJackModule;
 
@@ -38,7 +38,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 public class MongoRepository<T, I extends Serializable> extends AbstractRepository<T, I, AbstractMongoRepositoryProvider> {
 
@@ -53,22 +52,9 @@ public class MongoRepository<T, I extends Serializable> extends AbstractReposito
     }
 
     public void init() {
-        this.repositoryProvider.getIOLock().lock();
-        this.collection = this.repositoryProvider.createCollection(this.objectMapper(), this.repoId, this.type());
-        this.repositoryProvider.getIOLock().unlock();
-    }
-
-    private <T> T supply(Supplier<T> supplier) {
-        this.repositoryProvider.getIOLock().lock();
-        T t = supplier.get();
-        this.repositoryProvider.getIOLock().unlock();
-        return t;
-    }
-
-    private void run(Runnable runnable) {
-        this.repositoryProvider.getIOLock().lock();
-        runnable.run();
-        this.repositoryProvider.getIOLock().unlock();
+        this.repositoryProvider.withLock(() -> {
+            this.collection = this.repositoryProvider.createCollection(this.objectMapper(), this.repoId, this.type());
+        });
     }
 
     public ObjectMapper objectMapper() {
@@ -77,24 +63,24 @@ public class MongoRepository<T, I extends Serializable> extends AbstractReposito
 
     @Override
     public <S extends T> S save(S pojo) {
-        this.run(() -> this.collection.save(pojo));
+        this.repositoryProvider.withLock(() -> this.collection.save(pojo));
         return pojo;
     }
 
     @Override
     public <S extends T> Iterable<S> saveAll(Iterable<S> pojoIterable) {
-        this.run(() -> pojoIterable.forEach(pojo -> this.collection.save(pojo)));
+        this.repositoryProvider.withLock(() -> pojoIterable.forEach(pojo -> this.collection.save(pojo)));
         return pojoIterable;
     }
 
     @Override
     public Optional<T> findById(I id) {
-        return Optional.ofNullable(this.supply(() -> this.collection.findOneById(id)));
+        return Optional.ofNullable(this.repositoryProvider.withLock(() -> this.collection.findOneById(id)));
     }
 
     @Override
     public <Q> Optional<T> findByQuery(String query, Q value) {
-        return Optional.ofNullable(this.supply(() -> this.collection.findOne(Filters.eq(query, value))));
+        return Optional.ofNullable(this.repositoryProvider.withLock(() -> this.collection.findOne(Filters.eq(query, value))));
     }
 
     @Override
@@ -104,13 +90,13 @@ public class MongoRepository<T, I extends Serializable> extends AbstractReposito
 
     @Override
     public Iterable<T> findAll() {
-        return this.supply(() -> this.collection.find());
+        return this.repositoryProvider.withLock(() -> this.collection.find());
     }
 
     @Override
     public Iterable<T> findAllById(List<I> ids) {
         List<T> result = new ArrayList<>();
-        this.run(() -> {
+        this.repositoryProvider.withLock(() -> {
             for (T t : this.collection.find(this.collection.createIdInQuery(ids))) {
                 result.add(t);
             }
@@ -121,22 +107,22 @@ public class MongoRepository<T, I extends Serializable> extends AbstractReposito
 
     @Override
     public long count() {
-        return this.supply(() -> this.collection.countDocuments());
+        return this.repositoryProvider.withLock(() -> this.collection.countDocuments());
     }
 
     @Override
     public void deleteById(I id) {
-        this.run(() -> this.collection.removeById(id));
+        this.repositoryProvider.withLock(() -> this.collection.removeById(id));
     }
 
     @Override
     public <Q> void deleteByQuery(String query, Q value) {
-        this.run(() -> this.collection.deleteMany(Filters.eq(query, value)));
+        this.repositoryProvider.withLock(() -> this.collection.deleteMany(Filters.eq(query, value)));
     }
 
     @Override
     public void deleteAll() {
-        this.run(() -> this.collection.deleteMany(new BsonDocument()));
+        this.repositoryProvider.withLock(() -> this.collection.deleteMany(new BsonDocument()));
     }
 
     public String queryId() {

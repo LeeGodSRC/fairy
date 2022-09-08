@@ -29,6 +29,7 @@ import com.google.common.collect.Sets;
 import java.io.Serializable;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 public abstract class AbstractRepositoryProvider implements RepositoryProvider {
 
@@ -73,5 +74,25 @@ public abstract class AbstractRepositoryProvider implements RepositoryProvider {
     @Override
     public ReentrantLock getIOLock() {
         return this.lock;
+    }
+
+    public void withLock(Runnable runnable) {
+        this.lock.lock();
+        try {
+            runnable.run();
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    public <T> T withLock(Supplier<T> supplier) {
+        T retVal;
+        this.lock.lock();
+        try {
+            retVal = supplier.get();
+        } finally {
+            this.lock.unlock();
+        }
+        return retVal;
     }
 }

@@ -50,20 +50,23 @@ public abstract class AbstractMongoRepositoryProvider extends AbstractRepository
     @Override
     public void build0() {
         this.getIOLock().lock();
-        if (this.client != null) {
-            ThrowingRunnable.sneaky(this::close).run();
+        try {
+            if (this.client != null) {
+                ThrowingRunnable.sneaky(this::close).run();
+            }
+            MongoClientSettings clientSettings = this.mongoClientSettings();
+            this.client = MongoClients.create(clientSettings);
+            this.database = this.client.getDatabase(this.database());
+        } finally {
+            this.getIOLock().unlock();
         }
-        MongoClientSettings clientSettings = this.mongoClientSettings();
-        this.client = MongoClients.create(clientSettings);
-        this.database = this.client.getDatabase(this.database());
-        this.getIOLock().unlock();
     }
 
     public abstract String database();
 
     @Override
     public <E, ID extends Serializable> Repository<E, ID> createRepository(Class<E> entityType, String repoId) {
-        return new MongoRepository(this, entityType, repoId);
+        return new MongoRepository<>(this, entityType, repoId);
     }
 
     public <E> JacksonMongoCollection<E> createCollection(ObjectMapper objectMapper, String name, Class<E> entityType) {
