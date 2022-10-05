@@ -1,5 +1,7 @@
 package io.fairyproject.mc.map;
 
+import com.github.retrooper.packetevents.protocol.map.MapIcon;
+
 import java.util.Collection;
 
 /**
