@@ -1,10 +1,10 @@
 package io.fairyproject.mc.map;
 
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMapData;
 import io.fairyproject.container.*;
 import io.fairyproject.container.collection.ContainerObjCollector;
 import io.fairyproject.mc.MCPlayer;
 import io.fairyproject.mc.map.framebuffers.DirectFramebuffer;
-import io.fairyproject.mc.map.packet.WrapperPlayServerMapData;
 import io.fairyproject.mc.metadata.PlayerOnlineValue;
 import io.fairyproject.mc.protocol.MCProtocol;
 import io.fairyproject.metadata.MetadataKey;
@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Collectors;
 
 @Service
 public class MapService {
@@ -62,10 +61,9 @@ public class MapService {
             player.metadata().put(MAP_CURRENT, PlayerOnlineValue.create(current, player));
             MCProtocol.sendPacket(player, new WrapperPlayServerMapData(
                     current.id(),
-                    (byte) 0,
-                    current.icons().stream()
-                            .map(icon -> new WrapperPlayServerMapData.Icon(icon.type(), icon.x(), icon.y(), icon.rotation()))
-                            .collect(Collectors.toList()),
+                    0,
+                    false,
+                    current.icons(),
                     current.colors(),
                     current.x(),
                     current.y(),
