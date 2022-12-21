@@ -51,10 +51,9 @@ import java.util.concurrent.ScheduledExecutorService;
 @Service
 public class TablistService {
 
-    public static TablistService INSTANCE;
-
     private static final MetadataKey<Tablist> TABLIST_KEY = MetadataKey.create(Fairy.METADATA_PREFIX + "TabList", Tablist.class);
 
+    private TablistUpdater tablistUpdater;
     private List<TablistAdapter> adapters;
     private ScheduledExecutorService thread;
 
@@ -64,8 +63,7 @@ public class TablistService {
 
     @PreInitialize
     public void onPreInitialize() {
-        INSTANCE = this;
-
+        this.tablistUpdater = new TablistUpdater();
         this.adapters = new ArrayList<>();
         ContainerContext.get().objectCollectorRegistry().add(ContainerObjCollector.create()
                 .withFilter(ContainerObjCollector.inherits(TablistAdapter.class))
@@ -132,7 +130,8 @@ public class TablistService {
     }
 
     public void registerPlayerTablist(MCPlayer player) {
-        Tablist tablist = new Tablist(player);
+        Tablist tablist = new Tablist(player, this, this.tablistUpdater);
+        tablist.init();
 
         player.metadata().put(TABLIST_KEY, tablist);
     }

@@ -24,40 +24,31 @@
 
 package io.fairyproject.mc.tablist;
 
-import io.fairyproject.container.Autowired;
 import io.fairyproject.mc.MCPlayer;
 import io.fairyproject.mc.protocol.MCVersion;
 import io.fairyproject.mc.tablist.util.Skin;
 import io.fairyproject.mc.tablist.util.TabSlot;
-import io.fairyproject.mc.tablist.util.TablistUtil;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Getter
+@RequiredArgsConstructor
 public class Tablist {
 
-    @Autowired
-    private static TablistService SERVICE;
-
     private final MCPlayer player;
+    private final TablistService tablistService;
+    private final TablistUpdater tablistUpdater;
     private final Set<TabEntry> entries = new HashSet<>();
-    private final AtomicBoolean shown;
+    private final AtomicBoolean shown = new AtomicBoolean(false);
 
     private Component header;
     private Component footer;
 
-
-    public Tablist(MCPlayer player) {
-        this.player = player;
-        this.shown = new AtomicBoolean(false);
-
-        this.setup();
-    }
-
-    private void setup() {
+    protected void init() {
         this.entries.clear();
 
         final int possibleSlots = player.getVersion() == MCVersion.V1_7 ? 60 : 80;
@@ -77,29 +68,29 @@ public class Tablist {
         if (!this.shown.compareAndSet(false, true))
             return;
 
-        TablistUtil.addFakePlayer(this, this.entries);
+        this.tablistUpdater.addFakePlayer(this, this.entries);
     }
 
     private void hide() {
         if (!this.shown.compareAndSet(true, false))
             return;
 
-        TablistUtil.removeFakePlayer(this, this.entries);
+        this.tablistUpdater.removeFakePlayer(this, this.entries);
         for (TabEntry tabEntry : this.entries) {
-            TablistUtil.updateFakeName(this, tabEntry, Component.empty());
-            TablistUtil.updateFakeLatency(this, tabEntry, 0);
-            TablistUtil.updateFakeSkin(this, tabEntry, Skin.GRAY);
+            this.tablistUpdater.updateFakeName(this, tabEntry, Component.empty());
+            this.tablistUpdater.updateFakeLatency(this, tabEntry, 0);
+            this.tablistUpdater.updateFakeSkin(this, tabEntry, Skin.GRAY);
         }
 
         this.header = null;
         this.footer = null;
-        TablistUtil.updateHeaderAndFooter(this, Component.empty(), Component.empty());
+        this.tablistUpdater.updateHeaderAndFooter(this, Component.empty(), Component.empty());
     }
 
     public void update() {
         Set<TabEntry> previous = new HashSet<>(entries);
 
-        Set<TabSlot> current = SERVICE.getSlots(player);
+        Set<TabSlot> current = this.tablistService.getSlots(player);
         if (current == null || current.isEmpty()) {
             this.hide();
             return;
@@ -113,25 +104,25 @@ public class Tablist {
             if (tabEntry != null) {
                 previous.remove(tabEntry);
 
-                TablistUtil.updateFakeLatency(this, tabEntry, tabSlot.getPing());
-                TablistUtil.updateFakeName(this, tabEntry, tabSlot.getText());
-                TablistUtil.updateFakeSkin(this, tabEntry, tabSlot.getSkin());
+                this.tablistUpdater.updateFakeLatency(this, tabEntry, tabSlot.getPing());
+                this.tablistUpdater.updateFakeName(this, tabEntry, tabSlot.getText());
+                this.tablistUpdater.updateFakeSkin(this, tabEntry, tabSlot.getSkin());
             }
         }
 
         for (TabEntry tabEntry : previous) {
-            TablistUtil.updateFakeName(this, tabEntry, Component.empty());
-            TablistUtil.updateFakeLatency(this, tabEntry, 0);
-            TablistUtil.updateFakeSkin(this, tabEntry, Skin.GRAY);
+            this.tablistUpdater.updateFakeName(this, tabEntry, Component.empty());
+            this.tablistUpdater.updateFakeLatency(this, tabEntry, 0);
+            this.tablistUpdater.updateFakeSkin(this, tabEntry, Skin.GRAY);
         }
 
         previous.clear();
 
-        Component headerNow = SERVICE.getHeader(player);
-        Component footerNow = SERVICE.getFooter(player);
+        Component headerNow = this.tablistService.getHeader(player);
+        Component footerNow = this.tablistService.getFooter(player);
 
         if (!Objects.equals(this.header, headerNow) || !Objects.equals(this.footer, footerNow)) {
-            TablistUtil.updateHeaderAndFooter(this, headerNow, footerNow);
+            this.tablistUpdater.updateHeaderAndFooter(this, headerNow, footerNow);
             this.header = headerNow;
             this.footer = footerNow;
         }

@@ -22,41 +22,23 @@
  * SOFTWARE.
  */
 
-package io.fairyproject.mc.tablist.util;
+package io.fairyproject.mc.tablist;
 
 import com.github.retrooper.packetevents.protocol.player.GameMode;
 import com.github.retrooper.packetevents.protocol.player.TextureProperty;
 import com.github.retrooper.packetevents.protocol.player.UserProfile;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerListHeaderAndFooter;
 import io.fairyproject.mc.MCPlayer;
 import io.fairyproject.mc.protocol.MCProtocol;
-import io.fairyproject.mc.protocol.packet.PacketPlay;
-import io.fairyproject.mc.tablist.TabColumn;
-import io.fairyproject.mc.tablist.TabEntry;
-import io.fairyproject.mc.tablist.Tablist;
-import lombok.experimental.UtilityClass;
+import io.fairyproject.mc.tablist.util.Skin;
 import net.kyori.adventure.text.Component;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
-@UtilityClass
-public class TablistUtil {
-
-    public TabEntry createFakePlayer(Tablist tablist, String string, TabColumn column, int slot, int rawSlot) {
-        final MCPlayer player = tablist.getPlayer();
-
-        TabEntry tabEntry = new TabEntry(string, UUID.randomUUID(), Component.empty(), tablist, Skin.GRAY, column, slot, 0);
-        WrapperPlayServerPlayerInfo packet = new WrapperPlayServerPlayerInfo(
-                WrapperPlayServerPlayerInfo.Action.ADD_PLAYER,
-                create(tabEntry)
-        );
-
-        MCProtocol.sendPacket(player, packet);
-        return tabEntry;
-    }
+public class TablistUpdater {
 
     public void addFakePlayer(Tablist tablist, Collection<TabEntry> tabEntries) {
         final MCPlayer player = tablist.getPlayer();
@@ -64,7 +46,7 @@ public class TablistUtil {
         WrapperPlayServerPlayerInfo packet = new WrapperPlayServerPlayerInfo(
                 WrapperPlayServerPlayerInfo.Action.ADD_PLAYER,
                 tabEntries.stream()
-                        .map(TablistUtil::create)
+                        .map(this::create)
                         .collect(Collectors.toList())
         );
 
@@ -77,7 +59,7 @@ public class TablistUtil {
         WrapperPlayServerPlayerInfo packet = new WrapperPlayServerPlayerInfo(
                 WrapperPlayServerPlayerInfo.Action.REMOVE_PLAYER,
                 tabEntries.stream()
-                        .map(TablistUtil::create)
+                        .map(this::create)
                         .collect(Collectors.toList())
         );
 
@@ -136,10 +118,10 @@ public class TablistUtil {
     public void updateHeaderAndFooter(Tablist tablist, Component header, Component footer) {
         MCPlayer player = tablist.getPlayer();
 
-        final PacketPlay.Out.Tablist packet = PacketPlay.Out.Tablist.builder()
-                .header(header)
-                .footer(footer)
-                .build();
+        WrapperPlayServerPlayerListHeaderAndFooter packet = new WrapperPlayServerPlayerListHeaderAndFooter(
+                header,
+                footer
+        );
         MCProtocol.sendPacket(player, packet);
     }
 
